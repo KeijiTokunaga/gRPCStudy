@@ -1,19 +1,20 @@
 # gRPCの通信と仮想化の基礎
 
 この教材の通信シーケンスと、会話で整理したUDS・VSOCK・TCP、VM・ホストの違いをまとめます。
-本リポジトリで実装・検証したのはTCPによるgRPC通信です。UDS・VSOCKは概念の説明です。
+初期版はTCPでしたが、現在はUDSによるgRPC通信です。VSOCKは概念の説明のみです。
 
 ## 1. この教材の通信経路
 
 ```text
-C++クライアント → gRPC / HTTP/2 → TCP → Composeネットワーク → C++サーバー
+C++クライアント → gRPC / HTTP/2 → UDS（共有ボリューム）→ C++サーバー
 ```
 
-- サーバーは `0.0.0.0:50051` で待ち受けます。
-- クライアントはComposeのDNS名 `server` を使い、`server:50051` に接続します。
-- `0.0.0.0` は全IPv4インターフェースで待ち受ける指定で、クライアントの接続先ではありません。
-- ポートはホストへ公開していません。TLS・認証を省略したローカル学習用です。
-- `127.0.0.1` は各コンテナ自身を指します。
+- サーバーとクライアントは `unix:/sockets/greeter.sock` を使用します。
+- 同じ名前付きボリュームを `/sockets` にマウントし、ソケットのパスを共有します。
+- 両コンテナとも `network_mode: none` です。IP・ポート・DNSは通信に使いません。
+- 非rootのUID/GID 10001で動き、共有ディレクトリは所有者のみアクセス可能な0700です。
+- クライアントは読み取り専用マウントです。LinuxではそれでもUDSの接続・送受信ができます。
+- TLS・RPC認証を省略したローカル学習用です。ソケットへのアクセスをディレクトリ権限で制限します。
 
 `.proto` はRPCとメッセージの契約です。生成されたStubをクライアントが呼び、
 サーバーが生成されたServiceを実装します。メッセージはProtocol Buffersでシリアライズされます。
@@ -35,8 +36,8 @@ sequenceDiagram
     D->>S: サーバーコンテナ起動
     D->>C: クライアントコンテナ起動
     Note over C,S: 起動順だけでは待ち受け準備完了を保証しない
-    S->>S: 0.0.0.0:50051で待ち受け
-    C->>S: server:50051へTCP接続・HTTP/2準備
+    S->>S: /sockets/greeter.sockで待ち受け
+    C->>S: 共有UDSへ接続・HTTP/2準備
     Note over C,S: wait_for_readyで準備を待つ（RPC全体の期限は10秒）
     C->>S: SayHello({name: "Docker"})
     S->>S: 名前を検証・返答を作成
@@ -53,7 +54,7 @@ sequenceDiagram
 
 | ログ | 意味 |
 | --- | --- |
-| `Listening on 0.0.0.0:50051` | サーバーが待ち受けを開始 |
+| `Listening on unix:/sockets/greeter.sock` | サーバーが待ち受けを開始 |
 | `SayHello: Docker` | サーバーが正常なリクエストを処理 |
 | `Hello, Docker!` | クライアントが期待する応答を受信 |
 | `client ... code 0` | クライアント正常終了 |
@@ -155,7 +156,7 @@ socket(AF_INET,  SOCK_STREAM, 0); // IPv4のTCP
 
 | 通信区間 | 方式との関係 |
 | --- | --- |
-| serverコンテナ ↔ clientコンテナ | 本教材はTCP。ソケットパスを共有するUDSも候補 |
+| serverコンテナ ↔ clientコンテナ | 本教材は共有ボリューム上のUDS。IPネットワークは無効 |
 | macOS側プロセス ↔ Linux VM側プロセス | VSOCKが対象とする境界。ただし対応する仮想化基盤と実装が必要 |
 | 別の物理マシン同士 | 通常はTCP/IP |
 
@@ -168,3 +169,5 @@ socket(AF_INET,  SOCK_STREAM, 0); // IPv4のTCP
 - [socket(2): 通信ドメインとソケット型](https://man7.org/linux/man-pages/man2/socket.2.html)
 - [unix(7): Unix domain socket](https://man7.org/linux/man-pages/man7/unix.7.html)
 - [vsock(7): VSOCKの用途とアドレス形式](https://man7.org/linux/man-pages/man7/vsock.7.html)
+- [gRPCの接続先URI（Unix domain sockets）](https://github.com/grpc/grpc/blob/master/doc/naming.md)
+- [Dockerのボリュームと初期データコピー](https://docs.docker.com/engine/storage/volumes/)

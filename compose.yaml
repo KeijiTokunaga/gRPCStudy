@@ -4,9 +4,18 @@ services:
     image: grpc-study:local
     command: ["server"]
     init: true
+    network_mode: none
+    volumes:
+      - sockets:/sockets
   client:
     image: grpc-study:local
     pull_policy: never
-    command: ["client", "Docker", "server:50051"]
+    command: ["client", "Docker", "unix:/sockets/greeter.sock"]
+    network_mode: none
+    volumes:
+      - sockets:/sockets:ro
     depends_on:
       - server
+
+volumes:
+  sockets:

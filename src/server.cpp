@@ -17,14 +17,14 @@ class Greeter final : public study::Greeter::Service {
 int main() {
   Greeter service;
   grpc::ServerBuilder builder;
-  // shortcut: plaintext for a local Docker lab; add TLS before using across hosts.
-  builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
+  // shortcut: no RPC authentication in this local lab; restrict access via /sockets permissions.
+  builder.AddListeningPort("unix:/sockets/greeter.sock", grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
   auto server = builder.BuildAndStart();
   if (!server) {
     std::cerr << "Failed to start server\n";
     return 1;
   }
-  std::cout << "Listening on 0.0.0.0:50051" << std::endl;
+  std::cout << "Listening on unix:/sockets/greeter.sock" << std::endl;
   server->Wait();
 }

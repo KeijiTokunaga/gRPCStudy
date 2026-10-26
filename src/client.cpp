@@ -6,11 +6,11 @@
 
 int main(int argc, char** argv) {
   if (argc > 3) {
-    std::cerr << "Usage: client [name] [host:port]\n";
+    std::cerr << "Usage: client [name] [target]\n";
     return 1;
   }
   const std::string name = argc > 1 ? argv[1] : "Docker";
-  const std::string target = argc > 2 ? argv[2] : "server:50051";
+  const std::string target = argc > 2 ? argv[2] : "unix:/sockets/greeter.sock";
   auto stub = study::Greeter::NewStub(
       grpc::CreateChannel(target, grpc::InsecureChannelCredentials()));
   study::HelloRequest request;
