@@ -1,8 +1,16 @@
+// 全体の流れ: この通信契約 → CMakeがprotocでC++生成 → serverがServiceを実装 → clientがStubを呼ぶ。
+// 名前を1件送り、挨拶を1件受け取るUnary RPC。UDSのパスはここではなくsrcとComposeで指定する。
+// 生成された greeter.pb.* はメッセージ、greeter.grpc.pb.* はService/Stubを提供する。
 syntax = "proto3";
+// C++の名前空間studyに対応し、server/client双方で同じ型を使う。
 package study;
 
+// server.cppがSayHelloを実装し、client.cppは生成Stub経由でこのメソッドを同期呼び出しする。
 service Greeter {
   rpc SayHello (HelloRequest) returns (HelloReply);
 }
+// 入力の名前。空文字の拒否はprotoではなくserver.cppで行う。
+// 「= 1」は初期値ではなく通信上のフィールド番号。互換性維持のため別用途に再利用しない。
 message HelloRequest { string name = 1; }
+// 出力の挨拶文。client.cppは期待値「Hello, <名前>!」との一致も検証する。
 message HelloReply { string message = 1; }

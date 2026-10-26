@@ -1,21 +1,34 @@
+# 全体の流れ: serverで共通イメージをビルド → server起動 → clientが共有UDSへRPC → client終了。
+# 実行例: docker compose up --build --abort-on-container-exit --exit-code-from client
+# 上の指定ではclient終了後にserverも停止し、Composeはclientの終了コードを返す。
+# proto/CMake/Dockerfileがビルドを、src/server.cppとsrc/client.cppが通信処理を担当する。
 services:
+  # 共通イメージのビルド元。server.cppの待ち受け処理を起動する。
   server:
     build: .
     image: grpc-study:local
     command: ["server"]
+    # 小さなinitを挟み、Composeからの停止シグナルをserverへ転送する。
     init: true
+    # IPネットワークを無効化しても、共有ボリューム上のUDSなら通信できる。
     network_mode: none
     volumes:
+      # serverがここにgreeter.sockを作る。Dockerfileの所有権設定は新規ボリュームへコピーされる。
       - sockets:/sockets
+  # 同じビルド済みイメージからclient.cppを実行。初回は上の--build付きコマンドで準備する。
   client:
     image: grpc-study:local
     pull_policy: never
+    # 引数は実行ファイル、名前、接続先URI。server.cppのUDSパスと一致させる。
     command: ["client", "Docker", "unix:/sockets/greeter.sock"]
     network_mode: none
     volumes:
+      # 同じUDSを参照する。Linuxでは読み取り専用マウントでもUDSへの接続・送受信は可能。
       - sockets:/sockets:ro
+    # 起動順だけを保証する。待ち受け準備はclient.cppのwait_for_readyで期限内に待つ。
     depends_on:
       - server
 
+# 名前付きボリュームはdown後も残る。down -vはこの教材のボリューム内データも削除する。
 volumes:
   sockets:

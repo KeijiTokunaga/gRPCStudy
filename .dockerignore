@@ -1,3 +1,7 @@
+# Dockerfileのビルドに必要なファイルだけをDockerへ送るための設定。Gitの除外設定とは別。
+# 全体の流れ: 許可したCMake/proto/src → DockerfileのCOPY → 生成・コンパイル。
+# 原則すべて除外し、!で必要なディレクトリとその中身を再び許可する。
+# 新たなビルド入力を増やす場合は、ここへの追加とDockerfileのCOPYを両方確認する。
 *
 !CMakeLists.txt
 !proto/

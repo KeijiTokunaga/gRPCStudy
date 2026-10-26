@@ -1,9 +1,14 @@
+# 全体の流れ: push/PR → ソース取得 → Dockerビルド → UDS通信・再起動・異常系の検証。
+# ローカルでも使うtests/smoke.shをそのまま実行し、検証手順を一か所で管理する。
 name: Docker smoke test
+# 文書のみの変更も含めてpush/PRで実行。実際の検証項目はsmoke.sh側に記述する。
 on: [push, pull_request]
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    # ダウンロードやビルドが止まってもジョブを無期限に実行しない。
     timeout-minutes: 15
     steps:
+      # リポジトリのファイルを取得してから、Docker ComposeでC++アプリをビルド・検証する。
       - uses: actions/checkout@v4
       - run: sh tests/smoke.sh
