@@ -10,6 +10,10 @@ C++クライアント ── SayHello(name) ──▶ C++サーバー :50051
          Docker Composeのネットワーク（DNS名: server）
 ```
 
+## 学習ドキュメント
+
+[通信シーケンス・UDS／VSOCK／TCP・VMとホストの構成例](docs/communication-and-virtualization.md)
+
 ## 必要なもの
 
 - Docker Engine / Docker Desktop（起動済み）
