@@ -16,6 +16,10 @@ C++クライアント ── SayHello(name) ──▶ C++サーバー
 
 [通信シーケンス・UDS／VSOCK／TCP・VMとホストの構成例](docs/communication-and-virtualization.md)
 
+[プロジェクト全体の理解ポイント](docs/project-overview.md)
+
+[proto定義と生成コードの対応マッピング](docs/proto-codegen-mapping.md)
+
 ## 必要なもの
 
 - Docker Engine / Docker Desktop（起動済み）
