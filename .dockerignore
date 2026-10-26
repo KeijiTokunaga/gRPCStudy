@@ -1,0 +1,6 @@
+*
+!CMakeLists.txt
+!proto/
+!proto/**
+!src/
+!src/**

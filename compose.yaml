@@ -1,0 +1,12 @@
+services:
+  server:
+    build: .
+    image: grpc-study:local
+    command: ["server"]
+    init: true
+  client:
+    image: grpc-study:local
+    pull_policy: never
+    command: ["client", "Docker", "server:50051"]
+    depends_on:
+      - server
