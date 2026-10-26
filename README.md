@@ -12,6 +12,8 @@ C++クライアント ── SayHello(name) ──▶ C++サーバー
 
 ## 学習ドキュメント
 
+[各ファイルの役割・処理・変更時の対応関係](docs/file-guide.md)
+
 [通信シーケンス・UDS／VSOCK／TCP・VMとホストの構成例](docs/communication-and-virtualization.md)
 
 ## 必要なもの
